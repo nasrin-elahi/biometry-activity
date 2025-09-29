@@ -1,0 +1,200 @@
+---
+title: "Biometry.Activity1"
+author: "Nasrin Elahi Mehr"
+date: "2025-09-24"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+CPAP <- read.csv("C:/Users/n_ela/OneDrive/Desktop/module 1. R/CPAPAdherence_Data/CPAPAdherence_Data (2).csv")
+
+```
+#cleaning
+
+```{r}
+
+hist(x=CPAP$age)
+weirdAges<-which(CPAP$age>=100)
+print(x=weirdAges)
+CPAP$age[weirdAges]
+removeAges<-which(CPAP$age>= 100)
+print(x=removeAges)
+CPAP<-CPAP[-removeAges, ]
+hist(x=CPAP$age)
+```
+#Weird Age in Dataset
+#object 5 has error in age (555)****
+
+#mmse
+#maximum possible is 30
+
+```{r}
+hist(x=CPAP$mmse)
+```
+#ess
+#maximum possible is 24
+
+```{r}
+hist(CPAP$ess)
+table(CPAP$ess)
+```
+
+
+#one obj has ess=30 which is impossible****
+
+#AHI under 5 is impossible
+```{r}
+
+table (CPAP$ahi)
+```
+#race
+```{r}
+table(CPAP$race_white)
+table(CPAP$race_other)
+CPAP$race_other<-as.numeric(CPAP$race_other)
+table(CPAP$race_other)
+CPAP$race_white<-as.numeric(CPAP$race_white)
+table(CPAP$race_white)
+```
+#0NE missing Data in RACE_WHITE ****
+#ONE MISSING DATA IN RACE_OTHER****
+#education
+```{r}
+table(CPAP$education)
+```
+
+#ONE MISSING DATA IN EDUCATION****
+#sex
+```{r}
+table(CPAP$sex)
+
+```
+
+#ONE MISCONSISTENCY: IN SEX:2 IS NOT DEFINE ****
+#ID
+```{r}
+duplicated(x=CPAP$subject_id)
+which(x=duplicated(x=CPAP$subject_id))
+dupSpot<-which(x=duplicated(x=CPAP$subject_id))
+CPAP<-CPAP[-dupSpot, ]
+```
+
+#row 125 is duplicated *******
+
+# Create a single race variable
+```{r}
+CPAP$race_white<-ifelse(CPAP$race_white==1,"yes","NO")
+table(CPAP$race_white)
+
+CPAP$race <- ifelse(CPAP$race_black == 1, "Black",
+             ifelse(CPAP$race_white == "yes", "White",
+            ifelse(CPAP$race_other == 1, "Other", NA)))
+```
+#creat a binary Adherence varriable
+
+```{r}
+CPAP$adherence <- ifelse(CPAP$avg_daily_cpap >= 4, "Adherent",
+                  ifelse(CPAP$avg_daily_cpap < 4, "Non-Adherent", NA))
+
+```
+#visualization
+
+```{r}
+hist(CPAP$ahi)
+```
+****
+#THE HISTOGRAM SHOWES RIGHT SKEWED DISTRIBUTION IN AHI;meaning most individuals have lower AHI values while fewer have very high values. extreme cases of high AHI are less common but still present. the average is higher by these extreme values compared to the median.****
+```{r}
+boxplot(CPAP$age~CPAP$avg_daily_cpap)
+boxplot(CPAP$age~CPAP$adherence)
+```
+#***The boxplot shows that age distributions differ slightly across adherence categories. Both groups have similar medians, but the adherent group displays a wider interquartile range and greater variability in age.this is a bivariate display because it compares age across adherence categories.*****
+
+# Create barplot to compare race distributions across adherence groups
+
+```{r}
+tab <- table(CPAP$adherence, CPAP$race)
+prop_tab <- prop.table(tab, margin = 1)
+barplot(t(prop_tab),
+        beside = FALSE,
+        col = c("grey", "lightblue", "lightgreen", "pink"),
+        legend = colnames(prop_tab),
+        main = "Race Distribution by Adherence",
+        xlab = "Adherence", ylab = "Proportion")
+```
+
+#the barplot shows how race is distributed in the adherent and non-adherent groups. White participants are the largest group in both categories, while Black and Other groups are smaller. The overall pattern of race looks similar between adherence groups, though the exact counts differ slightly.This is a bivariate display because it compares race categories with adherence status.****
+```{r}
+plot(CPAP$ess, CPAP$mmse,
+     col = ifelse(CPAP$adherence == "Adherent", "blue", "red"),
+     pch = 16,
+     main = "ESS vs. MMSE by Adherence",
+     xlab = "Epworth Sleepiness Scale (ESS)",
+     ylab = "Mini-Mental State Exam (MMSE)")
+legend("bottomleft", legend = c("Adherent", "Non-Adherent"),
+       col = c("blue", "red"), pch = 16)
+```
+#The scatterplot shows no strong linear relationship between ESS and MMSE. A slight negative trend is visible, suggesting higher sleepiness might correspond to slightly lower cognitive scores. Both adherence groups follow similar patterns without clear differences. This is a bivariate display.****
+
+  
+
+#Table 1 and its description.
+
+```{r}
+summary(CPAP[, c("age", "ahi", "ess", "mmse", "avg_daily_cpap")])
+```
+
+# Stratified summaries
+
+```{r}
+by(CPAP[, c("age", "ahi", "ess", "mmse", "avg_daily_cpap")], CPAP$adherence, summary)
+
+```
+# Categorical variables
+```{r}
+table(CPAP$adherence, CPAP$sex)
+table(CPAP$adherence, CPAP$race)
+table(CPAP$adherence, CPAP$ethnicity)
+table(CPAP$adherence, CPAP$education)
+```
+
+
+# Load package 
+
+```{r}
+
+library(tableone)
+tab1 <- CreateTableOne(data = CPAP[, c(3,7,8,9,10,12,13)])
+
+```
+
+# Print the table
+```{r}
+print(tab1)
+
+```
+
+```
+
+
+
+
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+
