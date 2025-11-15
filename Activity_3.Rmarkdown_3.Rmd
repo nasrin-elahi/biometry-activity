@@ -1,0 +1,454 @@
+---
+title: "Activity_3"
+author: "Nasrin Elahi Mehr"
+date: "2025-11-12"
+output:
+  word_document: default
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(openxlsx)
+library(tidyverse)
+library(gtsummary)
+library(patchwork)
+library(car)
+#loading Data
+Dataset3 <- read.xlsx("C:/Users/n_ela/OneDrive - Virginia Tech/Desktop/module 1. R/Activity_3_Data/Suicide_Data.xlsx")
+view(Dataset3)
+view(Dataset3)
+str(Dataset3)
+head(Dataset3)
+
+```
+1- Create a Table 1 using the following guideline: [20 points]
+
+Title: “Table 1: Demographic and Mental Health Characteristics (n = 546)”
+Column headers: “Characteristic,” “Total,” “History of Suicide” “No History of Suicide”, “Effect Size”, and “P-value.”  The p-values should reflect the appropriate statistical tests comparing distributions across suicide groups for each characteristic.
+Sample sizes: Indicate sample sizes for the two suicide groups in parentheses within the column headers.
+Data presentation: Populate the cells with the appropriate measures of central tendency and variability (e.g., mean ± SD, median [IQR]) and label them clearly.
+Confidence intervals: Include 95% confidence intervals where appropriate and label them clearly.
+Footnotes: Use footnotes to clarify any abbreviations used and specify the statistical tests used for each comparison.
+Variables: Please include the following variables as characteristics in the Table: age, gender, race, ethnicity, annual household income, adverse childhood experiences (ACEs) numbered 1-10, depression, and suicidal risk (Suicidal Affect-Behavior-Cognition Scale [SABCS]).
+
+
+```{r}
+library(openxlsx)
+library(tidyverse)
+library(gtsummary)
+
+# read data
+Dataset3 <- read.xlsx(
+  "C:/Users/n_ela/OneDrive - Virginia Tech/Desktop/module 1. R/Activity_3_Data/Suicide_Data.xlsx"
+)
+
+# recode variables
+Dataset3 <- Dataset3 |>
+  mutate(
+    HX_SUICIDE = factor(
+      HX_SUICIDE,
+      levels = c(0, 1),
+      labels = c("No History of Suicide", "History of Suicide")
+    ),
+    GENDER    = factor(GENDER),
+    RACE      = factor(RACE),
+    ETHNICITY = factor(ETHNICITY),
+    INCOME    = factor(INCOME)
+  )
+```
+** “Table 1: Demographic and Mental Health Characteristics (n = 546)”**
+```{r table1, message=FALSE, warning=FALSE}
+# Create ACES1_10 as the sum of ACES 1–10
+Dataset3 <- Dataset3 |>
+  dplyr::mutate(
+    ACES1_10 = rowSums(dplyr::select(Dataset3, ACES___1:ACES___10), na.rm = TRUE)
+  )
+
+tbl1 <-
+  Dataset3 |>
+  dplyr::select(
+    AGE,
+    GENDER,
+    RACE,
+    ETHNICITY,
+    INCOME,
+    ACES1_10,               
+    CESDR_TOTAL_SUM,
+    SABCS_TOTAL_SUM,
+    HX_SUICIDE
+  ) |>
+  tbl_summary(
+    by = HX_SUICIDE,
+    type = list(all_continuous() ~ "continuous2"),
+    statistic = list(
+      all_continuous()  ~ "{mean} \u00b1 {sd}",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits  = all_continuous() ~ 1,
+    missing = "ifany"
+  ) |>
+  add_p() |>
+  bold_labels()
+
+tbl1
+```
+
+ACES = Adverse Childhood Experiences(numbered Of SexualAbuse,Emotional Abuse,PhysicalNeglect,Emotional Neglect,Exposure to Domestic Violence,Household Substance Abuse,Household Mental Illness,Parental Seperation or divorce,increased Household Member )  
+SABCS = Suicidal Affect-Behavior-Cognition Scale.
+CESD-R:Center for Epidemiologic Studies Depression Scale-Revised 
+
+Continuous variables are presented as mean ± SD and compared between suicide-history groups using appropriate tests selected by ` (t-tests or non-parametric alternatives as needed).  
+Categorical variables are presented as n (%) and compared using chi-square or exact tests as appropriate.  
+P-values correspond to these group comparison
+
+```{r tbl1_effectsize, results="asis"}
+library(gtsummary)
+library(dplyr)
+cat("**Table 1. Demographic and Mental Health Characteristics (n = 546), with effect size and 95% CI**\n\n")
+tbl1_effect <-
+  tbl1 |>
+  # add effect size + 95% CI and p-values using t.test / chisq.test
+  add_difference(
+    test = list(
+      all_continuous()  ~ "t.test",
+      all_categorical() ~ "chisq.test"
+    )
+  ) |>
+  # rename the new columns nicely (these are the REAL names in your error:
+  # estimate, conf.low, conf.high, p.value)
+  modify_header(
+    estimate ~ "**Effect size**",
+    conf.low ~ "**95% CI (low)**",
+    conf.high ~ "**95% CI (high)**",
+    p.value  ~ "**p-value**"
+  ) |>
+  # put a title directly on the gtsummary table
+  modify_caption("**Table 1. Demographic and Mental Health Characteristics (n = 546) – with effect size and 95% CI**")
+
+tbl1_effect
+
+```
+
+ACES = Adverse Childhood Experiences(numbered Of SexualAbuse,Emotional Abuse,PhysicalNeglect,Emotional Neglect,Exposure to Domestic Violence,Household Substance Abuse,Household Mental Illness,Parental Seperation or divorce,increased Household Member )  
+SABCS = Suicidal Affect-Behavior-Cognition Scale.
+CESD-R:Center for Epidemiologic Studies Depression Scale-Revised 
+
+Continuous variables are presented as mean ± SD and compared between suicide-history groups using appropriate tests selected by ` (t-tests or non-parametric alternatives as needed).  
+Categorical variables are presented as n (%) and compared using chi-square or exact tests as appropriate.  
+P-values correspond to these group comparison
+
+
+
+__________________________________________________________________________________
+H. Assuming alpha = 0.05, choose one characteristic with a significant p-value when comparing suicide groups. Explain the result in 2-3 sentences using plain language.
+
+**interpretation comparing  Age in two group of History of suicide and non history of suicide:
+we have no evidence that Age is statistically  different between individuals with and without a history of suicide (p = 0.3). Although the suicide-history group had a slightly higher average age (25.7 years vs. 24.8 years), this difference is not statistically meaningfull . Therefore,Statistically age does not appear to be an important factor distinguishing the two groups in this sample.
+___________________________________________________________________________________
+I. Assuming alpha = 0.05, choose one characteristic with a non-significant p-value when comparing suicide groups. Explain the result in 2-3 sentences using plain language.
+**Interpretation (Characteristic: ACEs)
+ we have evidence that ACEs between group with history of suicide and without history of suiside is statistically different(p<0.001).(there is only 5% which this difference come by accident). Individuals with a history of suicide reported much higher ACE scores on average (3.3 ACEs) compared to those with no history of suicide (1.4 ACEs), and this difference was statistically significant (p < 0.001). This means we have evidence that people in the suicide-history group experienced more adverse events during childhood and higher childhood adversity is  associated with having a history of suicidal.
+ _________________________________________________________________________________
+ 2-This problem will focus on comparing suicidal risk (Suicidal Affect-Behavior-Cognition Scale [SABCS]) across race groups (White/Caucasian vs Asian vs Other). [15 points]
+
+A-Group comparison:Using the aov() function in R, compare the three race groups for statistical differences in mean suicidal risk scores. Describe the distributions of the suicidal risk scores for each of the three race groups and include appropriate visualizations and summary statistics.
+```{r}
+# Prepare data
+dat_race <- Dataset3[, c("RACE", "SABCS_TOTAL_SUM")]
+dat_race <- dat_race[!is.na(dat_race$RACE) & !is.na(dat_race$SABCS_TOTAL_SUM), ]
+dat_race$RACE <- droplevels(dat_race$RACE)
+data.frame(
+  Race = levels(dat_race$RACE),
+  Mean = tapply(dat_race$SABCS_TOTAL_SUM, dat_race$RACE, mean),
+  SD   = tapply(dat_race$SABCS_TOTAL_SUM, dat_race$RACE, sd)
+)
+
+# Summary statistics by race
+aggregate(SABCS_TOTAL_SUM ~ RACE, data = dat_race,
+          FUN = function(x) c(n = length(x),
+                              mean = mean(x),
+                              sd = sd(x)))
+
+# Boxplot
+boxplot(SABCS_TOTAL_SUM ~ RACE, data = dat_race,
+        main = "SABCS Suicidal Risk by Race",
+        xlab = "Race", ylab = "Suicidal Risk Score")
+
+# One-way ANOVA
+fit_aov <- aov(SABCS_TOTAL_SUM ~ RACE, data = dat_race)
+summary(fit_aov)
+
+```
+***The mean suicidal-risk scores is 3.71 for White/Caucasian, 3.65 for Asian, and 3.15 for the “Other” race group. All three groups had similar average scores and similar variability (standard deviations), with no clear differences between them.This is the same we can see in Boxplot and  This is consistent with the ANOVA result (F = 0.667, p = 0.514), which indicates no statistically significant differences in suicidal-risk across race categories.
+___________________________________________________________________________________
+B-Checking assumptions:Examine model assumptions as appropriate and describe in 2-3 sentences.
+```{r}
+# Residual diagnostic plots
+par(mfrow = c(1, 2))     # show 2 plots side-by-side
+plot(fit_aov, which = 1) # Residuals vs Fitted (checks equal variances)
+plot(fit_aov, which = 2) # Normal Q–Q plot (checks normality)
+par(mfrow = c(1, 1))     # reset layout
+```
+***When we check the ANOVA assumptions, the plots did not show any large variation. The points were spread out  evenly, and the residuals looked close enough to a normal pattern. This means the ANOVA assumptions are acceptable, and it is okay to trust the results of the test.
+__________________________________________________________________________________
+C-Post-hoc analysis:When (and if) appropriate, conduct post-hoc pairwise comparisons. Then, report and interpret the results in 2-3 sentences using plain language. If post-hoc pairwise comparisons are not appropriate, please explain why in 2-3 sentences.
+**Post-hoc pairwise comparisons are not appropriate because the  ANOVA test was not significant (p = 0.514). This means there is no evidence that the average suicidal-risk scores differ across the three race groups. Since no group difference was detected at the overall level, running additional pairwise tests would not be meaningful and would only increase the risk of false positives.
+___________________________________________________________________________________
+D-Linear Regression: Using the lm() function in R, regress suicidal risk on race using “White/Caucasian” as the reference category. Report and interpret your results in 1 sentence using plain language (alpha = 0.05).
+```{r}
+# Make White/Caucasian the reference group
+dat_race$RACE <- relevel(dat_race$RACE, ref = "White/Caucasian")
+
+# Linear regression
+fit_lm <- lm(SABCS_TOTAL_SUM ~ RACE, data = dat_race)
+summary(fit_lm)
+
+```
+**interpretation:The small p-value on the intercept only means White/Caucasian participants have suicidal-risk scores above zero.and The race group p-values tell us whether race predicts suicidal risk — and those p-values are NOT significant, so race does not explain suicidal-risk differences.
+___________________________________________________________________________________
+E.Compare and Contrast your Results: Review the results from parts a and d and describe your observations in 2-3 sentences.
+
+It seems that the ANOVA test and the linear regression model show the same conclusion: suicidal-risk scores did not differ significantly across the three race groups. In ANOVA, the overall test was not significant (p = 0.514), and the regression showed that neither the Asian nor Other race groups differed from the White/Caucasian group (p = 0.453 and p = 0.324). These results indicate that race does not meaningfully predict suicidal-risk in this survey.
+___________________________________________________________________________________
+3. This problem will focus on comparing suicidal risk (Suicidal Affect-Behavior-Cognition Scale [SABCS]) across the five income groups. [15 points]
+
+A.Group comparison:Using the aov() function in R, compare the five income groups for statistical differences in mean suicidal risk scores. Describe the distributions of the suicidal risk scores for each of the five income groups in 2-3sentences and include appropriate visualizations and summary statistics.
+```{r}
+# A. Group comparison: SABCS across 5 income groups
+
+# 1) Prepare data (keep only INCOME and SABCS, remove missing values)
+dat_income <- Dataset3[, c("INCOME", "SABCS_TOTAL_SUM")]
+dat_income <- dat_income[!is.na(dat_income$INCOME) & !is.na(dat_income$SABCS_TOTAL_SUM), ]
+dat_income$INCOME <- droplevels(dat_income$INCOME)
+
+# 2) Summary statistics (mean and SD of SABCS for each income group)
+tapply(dat_income$SABCS_TOTAL_SUM, dat_income$INCOME, mean)
+tapply(dat_income$SABCS_TOTAL_SUM, dat_income$INCOME, sd)
+
+#  nicer small table
+data.frame(
+  Income = levels(dat_income$INCOME),
+  Mean   = tapply(dat_income$SABCS_TOTAL_SUM, dat_income$INCOME, mean),
+  SD     = tapply(dat_income$SABCS_TOTAL_SUM, dat_income$INCOME, sd)
+)
+
+# 3) Boxplot of suicidal risk by income group
+boxplot(SABCS_TOTAL_SUM ~ INCOME, data = dat_income,
+        main = "SABCS Suicidal Risk by Income Group",
+        xlab = "Income Group",
+        ylab = "Suicidal Risk Score (SABCS)")
+
+# 4) One-way ANOVA
+fit_aov_income <- aov(SABCS_TOTAL_SUM ~ INCOME, data = dat_income)
+summary(fit_aov_income)
+
+```
+***interpretation:
+ mean suicidal-risk scores varied across the five income groups, ranging from about 2.36 in the $51,000–$75,000 group to about 4.55 in the < $30,000 group. Lower-income groups tended to have slightly higher suicidal-risk scores on average, while middle-income groups showed lower scores, and the highest-income group (>$100,000) was in the middle range. The ANOVA test showed a statistically significant difference across the income groups (F = 2.964, p = 0.0193), meaning suicidal-risk levels vary by income  in this sample.
+ __________________________________________________________________________________
+B.Checking assumptions:Examine model assumptions as appropriate and describe in 2-3 sentences.
+```{r}
+par(mfrow = c(1, 2))     # show both plots side-by-side
+plot(fit_aov_income, which = 1)  # Residuals vs Fitted (equal variance)
+plot(fit_aov_income, which = 2)  # Normal Q–Q plot (normality)
+par(mfrow = c(1, 1))     # reset layout
+```
+***interpretation:The residuals-fitted plot shows unequal spread across the income groups, with some clusters of points and s unusual large residuals, suggesting that the assumption of equal variances may not be fully met. The Q–Q plot also shows a strong curve in the upper tail, indicating that the residuals are not perfectly normally distributed and that the data may be somewhat skewed. These issues suggest that the ANOVA results should be interpreted with caution, although the  sample sizes are large.
+___________________________________________________________________________________
+C.Post-hoc analysis:When (and if) appropriate, conduct post-hoc pairwise comparisons. Then, report and interpret the results in 2-3 sentences using plain language. If post-hoc pairwise comparisons are not appropriate, explain why in 2-3 sentences.
+```{r}
+TukeyHSD(fit_aov_income)
+
+```
+***interpretation:Because the overall ANOVA was significant, Tukey post-hoc tests were used to compare suicidal-risk scores between specific income groups. The only statistically significant difference was between the < $30,000 group and the $51,000–$75,000 group (p = 0.008), with the lower-income group showing higher suicidal-risk scores. All other pairwise comparisons were not significant, meaning that most income groups did not differ meaningfully from each other in this sample.
+___________________________________________________________________________________
+D.Linear regression: Using the lm() function in R, regress suicidal risk on income using “< $30,000” as the reference category. Report and interpret your results in 1 sentence using plain language (alpha = 0.05).
+```{r}
+# Make "< $30,000" the reference group
+dat_income$INCOME <- relevel(dat_income$INCOME, ref = "< $30,000")
+
+# Linear regression
+fit_lm_income <- lm(SABCS_TOTAL_SUM ~ INCOME, data = dat_income)
+summary(fit_lm_income)
+
+```
+***interpretation:Compared with the lowest income group (“< $30000”), the $51000–$75000 group had significantly lower suicidal-risk scores by about 2.19 points (p = 0.0009), the $76000–$100000 group also had modestly lower scores by about 1.59 points (p = 0.016), while the remaining income groups did not differ significantly from the lowest-income group.
+___________________________________________________________________________________
+E.Compare and contrast your results: Review the results from parts a and d and describe your observations in 2-3 sentences.
+Both the ANOVA and the linear regression showed that suicidal-risk scores differ across income groups. In both method, the group showing the highest difference was the $51000–$75000 income group(0.0082668~0.000934 ) which are significantly lower suicidal-risk scores compared with the lowest-income group (“< $30000”).the linear regression test shows that we have significant difference between $76000_$100000 income compare with $30000 income that didnt show in ANOVA. The ANOVA identified a general difference across groups, while the regression model  can clarify the specific direction and size of those differences
+____________________________________________________________________________________________________________________
+4_. This problem will focus on comparing suicidal risk (Suicidal Affect-Behavior-Cognition Scale [SABCS]) across the two gender groups. [10 points]
+
+Group comparison:Using a two-sample t-test, compare suicidal risk by gender and report your results in 1 sentence using plain language (alpha = 0.05).
+```{r}
+# Prepare data
+dat_gender <- Dataset3[, c("GENDER", "SABCS_TOTAL_SUM")]
+dat_gender <- dat_gender[!is.na(dat_gender$GENDER) & !is.na(dat_gender$SABCS_TOTAL_SUM), ]
+dat_gender$GENDER <- droplevels(dat_gender$GENDER)
+
+# Two-sample t-test
+t.test(SABCS_TOTAL_SUM ~ GENDER, data = dat_gender)
+
+```
+***interpretation:based on two sample test we have no evidence that there is any difference in SABC(Ssuicidal-risk scores) in male and female.[females (mean = 3.33) and males (mean = 3.00)], with p = 0.7039 it shows statistically gender is not associated with suicidal-risk in this sample.
+___________________________________________________________________________________________________________________
+
+Group comparison:Using the lm() function in R, regress suicidal risk on gender using “Female” as the reference category. Report and interpret your results in 1 sentence using plain language (alpha = 0.05).
+```{r}
+dat_gender <- Dataset3[, c("GENDER", "SABCS_TOTAL_SUM")]
+dat_gender <- dat_gender[!is.na(dat_gender$GENDER) & !is.na(dat_gender$SABCS_TOTAL_SUM), ]
+dat_gender$GENDER <- droplevels(dat_gender$GENDER)
+dat_gender$GENDER <- relevel(dat_gender$GENDER, ref = "Female")
+
+fit_lm_gender <- lm(SABCS_TOTAL_SUM ~ GENDER, data = dat_gender)
+summary(fit_lm_gender)
+```
+***iterpretation:in the linear regression model using females as the reference group, males had suicidal-risk scores that were about 0.33 points lower on average, but with with p=0.65 this difference is not statistically significant  so we have no evidence that  gender predict suicidal-risk in this sample.
+____________________________________________________________________________________________________________________
+
+Compare and contrast your results: Review the results from parts a and b and describe your observations in 2-3 sentences.
+ the t-test and the linear regression are  same conclusion: there is no meaningful difference in suicidal-risk scores between males and females. Both methods shows non-significant p-values with almost similar value (0.7039 and 0.652), showing that gender does not explain variation in suicidal-risk. 
+ __________________________________________________________________________________________________________________
+ 5_This problem will focus on quantifying the association between suicidal risk (Suicidal Affect-Behavior-Cognition Scale [SABCS]) and depression (CESD-R), including the form, direction, and strength of their relationship. [15 points]
+
+A.Visualization: Generate and include an appropriate visualization to illustrate the relationship between the two variables
+```{r}
+plot(Dataset3$CESDR_TOTAL_SUM, Dataset3$SABCS_TOTAL_SUM,        #Scatter plot
+     xlab = "Depression (CESD-R)",
+     ylab = "Suicidal Risk (SABCS)",
+     main = "Scatterplot of Suicidal Risk vs Depression",
+     pch = 19, col = "darkblue")
+
+```
+***interpretation:The scatterplot shows a  upward trend between depression scores (CESD-R) and suicidal-risk scores (SABCS) although the points are spread out and the relationship is not tight. Overally, the pattern suggests a positive linear association between the two variables.
+
+B.Estimation: Estimate and report the correlation coefficient between suicidal risk and depression.
+```{r}
+cor.test(Dataset3$CESDR_TOTAL_SUM, Dataset3$SABCS_TOTAL_SUM)
+
+```
+**interpretation:correlation between depression and suicidal risk(r) is 0.589, indicating a moderate-to-strong positive relationship between the two variables.
+____________________________________________________________________________________________________________________
+
+C.Test assumptions: Test and report whether the assumptions for the correlation analysis are met.
+```{r}
+plot(Dataset3$CESDR_TOTAL_SUM, Dataset3$SABCS_TOTAL_SUM,
+     main = "Check Linearity and Outliers")
+abline(lm(SABCS_TOTAL_SUM ~ CESDR_TOTAL_SUM, data = Dataset3), col = "red")
+
+```
+interpretation:The scatterplot shows a clear upward trend, which suggests that the relationship between depression and suicidal risk is almost linear and  the main assumption for Pearson correlation is met. Although  some the poins are  spread out, there are no extreme outliers that distort the analysis. Overally, the assumptions for using Pearson’s correlation appear to be adequately met.
+___________________________________________________________________________________________________________________
+
+D.Test correlation: Determine whether the correlation is statistically significant at the 0.05 level and report and interpret your findings in 2-3 sentences using plain language.
+```{r}
+cor.test(Dataset3$CESDR_TOTAL_SUM, Dataset3$SABCS_TOTAL_SUM)
+
+```
+**Interpretation:The correlation test showed that the relationship between depression and suicidal risk is statistically significant (p=2.2e-16). This means the chance of having this level of association due to random variation  is too small and we have evidence that higher depression scores are associated with higher suicidal-risk scores in this sample.
+____________________________________________________________________________________________________________________
+
+E,Visualization: If appropriate, fit a line of best fit to describe the relationship between the two variables (using suicidal risk as the dependent variable), and report the estimated equation for the line. If a fitted line is not appropriate, explain why in 2-3 sentences.
+```{r}
+plot(Dataset3$CESDR_TOTAL_SUM, Dataset3$SABCS_TOTAL_SUM,
+     xlab = "Depression (CESD-R)",
+     ylab = "Suicidal Risk (SABCS)",
+     main = "Suicidal Risk vs Depression with Regression Line",
+     pch = 19)
+
+abline(lm(SABCS_TOTAL_SUM ~ CESDR_TOTAL_SUM, data = Dataset3), col = "red", lwd = 2)
+fit_line <- lm(SABCS_TOTAL_SUM ~ CESDR_TOTAL_SUM, data = Dataset3)
+summary(fit_line)
+```
+Interpretation:
+equation of fit line is :SABCS=0.0109+0.2090*CESD,it means that for every 1-point increase in depression (CESD), suicidal-risk scores increase by about 0.21 points on average. The very small intercept means that when depression is near zero, suicidal-risk scores are also near zero.The positive slope means that higher depression scores are str associated with higher suicidal-risk scores. The model(R-squred=0.347) explains about 35% of the variation in suicidal-risk scores, which means depression can be a significant predictor. fitted line is appropriate in this case because the scatterplot shows a  linear upward pattern between depression and suicidal risk. There are no major outliers and the relationship strengthens consistently as depression increases.
+____________________________________________________________________________________________________________________
+
+F.Linear regression: If appropriate, test whether the fitted line represents a statistically significant relationship between the variables (alpha = 0.05). Then, report and interpret the results in 2-3 sentences using plain language. If a test is not appropriate, explain why in 2-3 sentences.
+```{r}
+fit_line <- lm(SABCS_TOTAL_SUM ~ CESDR_TOTAL_SUM, data = Dataset3)
+summary(fit_line)
+
+```
+The linear regression test shows that depression is a statistically significant predictor of suicidal risk (p < 2* 10⁻¹⁶). The positive slope (0.209) means that as depression increases, suicidal-risk scores also tend to increase. The test shows about 35% of the variation in suicidal-risk scores (R² = 0.347), indicating a meaningful and moderate  relationship between the two variables.Overally,statistically depression explains a good amount of the differences we see in suicidal-risk scores, so the two are connected.
+___________________________________________________________________________________________________________________
+6- This problem will focus on quantifying the association between suicidal risk (Suicidal Affect-Behavior-Cognition Scale [SABCS]) and age, including the form, direction, and strength of their relationship. [15 points]
+
+A.Visualization: Generate and include an appropriate visualization to illustrate the relationship between the two variables.
+```{r}
+plot(Dataset3$AGE, Dataset3$SABCS_TOTAL_SUM,
+     xlab = "Age",
+     ylab = "Suicidal Risk (SABCS)",
+     main = "Scatterplot of Suicidal Risk vs Age",
+     pch = 19, col = "blue")
+
+```
+**interpretation:The scatterplot shows that suicidal-risk scores are widely spread out in all ages more impact between 15-40 years old and slightly downward for older ages, with no strong visible trend.  the pattern seems very weak and mostly flat, suggesting that age does not have a meaningful linear relationship with suicidal-risk scores. Overall, the plot indicates small to no association between age and suicidal risk in this plot,
+___________________________________________________________________________________________________________________
+B.Estimation: Estimate and report the correlation coefficient between suicidal risk and age.
+```{r}
+cor.test(Dataset3$AGE, Dataset3$SABCS_TOTAL_SUM)
+
+```
+***interpretation:The correlation between age and suicidal-risk scores is r = –0.075, indicating  there is a very weak negative relationship.
+___________________________________________________________________________________________________________________
+
+C.Test assumptions: Test and report whether the assumptions for the correlation analysis are met.
+```{r}
+# Fit regression model
+fit_age <- lm(SABCS_TOTAL_SUM ~ AGE, data = Dataset3)
+
+# Set up plotting window
+par(mfrow = c(1, 2))
+
+# Residuals vs Fitted plot
+plot(fit_age$fitted.values, fit_age$residuals,
+     xlab = "Fitted Values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted",
+     pch = 19, col = "blue")
+abline(h = 0, col = "red", lwd = 2)
+
+# Q-Q plot of residuals
+qqnorm(fit_age$residuals,
+       main = "Q-Q Plot of Residuals",
+       pch = 19, col = "blue")
+qqline(fit_age$residuals, col = "red", lwd = 2)
+
+```
+To evaluate the assumptions for Pearson correlation, I examined the scatterplot of age and suicidal-risk scores. The points  does not show strong curvature, which means the relationship can be almost linear and meet the main correlation assumption. There are also no extreme outliers  and both variables are continuous. Therefore, the assumptions for running Pearson’s correlation appear to be reasonably met.the Residual plot shows that the residuals are widely scattered with no clear pattern, which is generally acceptable for linear regression.The Q–Q plot shows that the residuals deviate  from the straight line, especially in the upper tail. This indicates that the residuals are not normally distributed but this non-normality does not seriously affect the slope estimate.
+___________________________________________________________________________________________________________________
+D.Test correlation: Determine whether the correlation is statistically significant at the 0.05 level and report and interpret your findings in 2-3 sentences using plain language.
+```{r}
+cor.test(Dataset3$AGE, Dataset3$SABCS_TOTAL_SUM)
+```
+***interpretation: we have no evidence That the correlation between age and suicidal-risk scores is  significant at the 0.05 level (p = 0.0795). This means the small negative relationship we observed (r = –0.075) could easily be due to random chance rather than a real pattern. overally age does not appear to be statistically related to suicidal-risk levels in this study,
+____________________________________________________________________________________________________________________
+
+E.Visualization: If appropriate, fit a line of best fit to describe the relationship between the two variables (using suicidal risk as the dependent variable), and report the estimated equation for the line. If a fitted line is not appropriate, explain why in 2-3 sentences.
+```{r}
+plot(Dataset3$AGE, Dataset3$SABCS_TOTAL_SUM,
+     xlab = "Age", 
+     ylab = "Suicidal Risk (SABCS)",
+     main = "Suicidal Risk vs Age with Regression Line",
+     pch = 19)
+
+abline(lm(SABCS_TOTAL_SUM ~ AGE, data = Dataset3), col = "red", lwd = 2)
+summary(lm(SABCS_TOTAL_SUM ~ AGE, data = Dataset3))
+
+```
+The estimated regression equation from the line is:SABCS=4.7001−0.0561*Age.This equation shows that suicidal-risk scores slightly decrease as age increases but the downward trend is very small.fitted line is appropriate for this visualization because the scatterplot shows a very weak but  almost linear pattern between age and suicidal-risk scores.The slight downward trend was not statistically significant, meaning the difference could just be due to chance. Overally age does not appear to influence suicidal-risk levels in this sample.
+_
+___________________________________________________________________________________________________________________
+
+F.Linear regression: If appropriate, test whether the fitted line represents a statistically significant relationship between the variables (alpha = 0.05). Then, report and interpret the results in 2-3 sentences using plain language. If a test is not appropriate, explain why in 2-3 sentences.
+```{r}
+fit_age <- lm(SABCS_TOTAL_SUM ~ AGE, data = Dataset3)
+summary(fit_age)
+
+```
+****Interpretation:The linear regression showed that age was not a statistically significant predictor of suicidal-risk scores (p = 0.0795), meaning the small downward trend in the fitted line is not meaningful. Although the slope is slightly negative, the change in suicidal risk with age is extremely small and could easily be due to chance. overally the finding  shows that age does not meaningfully explain or predict suicidal-risk levels in this study.
+
+
+
