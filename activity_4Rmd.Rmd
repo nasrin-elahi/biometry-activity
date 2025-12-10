@@ -1,0 +1,387 @@
+---
+title: "activity_4"
+author: "Nasrin Elahi Mehr"
+date: "2025-12-09"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(openxlsx)
+library(knitr)
+library(gtsummary)
+library(flextable)
+library(modelsummary)
+library(performance)
+```
+1-This problem focuses on generating models with suicidal risk as measured by the Suicidal Affect-Behavior-Cognition Scale (SABCS) as the dependent variable. [34 points]
+
+A.Generate a multivariable model regressing SABCS_TOTAL_SUM on demographic variables representing age, gender, race, ethnicity, and annual household income. Examine and report model diagnostics. Explain your findings in 5 sentences or less using plain language.
+```{r}
+# read data
+Dataset4 <- read.xlsx("C:/Users/n_ela/OneDrive - Virginia Tech/Desktop/Activity_4/SuicideRisk_Data (1).xlsx")
+
+# set reference categories
+Dataset4$GENDER    <- relevel(factor(Dataset4$GENDER),    ref = "Female")
+Dataset4$RACE      <- relevel(factor(Dataset4$RACE),      ref = "White/Caucasian")
+Dataset4$ETHNICITY <- relevel(factor(Dataset4$ETHNICITY), ref = "Not Hispanic/Latino")
+Dataset4$INCOME    <- relevel(factor(Dataset4$INCOME),    ref = "< $30,000")
+
+# fit model
+mod.1 <- lm(SABCS_TOTAL_SUM ~ AGE + GENDER + RACE + ETHNICITY + INCOME,
+            data = Dataset4)
+
+# ANOVA table
+anova(mod.1)
+
+# model summary
+summary(mod.1)
+
+# regression table
+tbl1 <- tbl_regression(mod.1)
+tbl1
+
+# diagnostic plots
+par(mfrow = c(1, 2))
+plot(mod.1, which = 1:2)
+
+# VIF table
+tbl_regression(mod.1) %>%
+  add_vif()
+
+```
+
+REPORT:Asian participants have about 0.36 points lower SABCS scores compare to White/Caucasian participants on average, but this difference is not statistically significant(coef=-0.3552 and p = 0.614),Other” race participants have about 0.33 points higher scores compare to White/Caucasian, also not significant.(coef:0.3251,p = 0.661))Hispanic/Latino participants have about 1.19 points higher SABCS scores compare to non-Hispanic participants, and this difference is statistically significant.( coef;1.1861 ,p = 0.046)people with incomes between $51,000 and $100,000 report lower risk(2.2ponts and 1.4 point) compared to the lowest-income group which are significant(p<0.05).
+Age, gender do not show meaningful associations with suicidal risk after adjustment.Male have 0.3 point lower score compare to female(coef=-0.28)The regression model shows that demographic characteristics explain only a small portion of the variation in suicidal risk (R² = 3.7%). Ethnicity and household income are the only statistically significant predictors of SABCS scores.
+**Check assumption:The Residuals vs Fitted plot shows a mostly random scatter shows that the linearity assumption is approximately met, although the spread of residuals slightly increases at higher fitted values, suggesting mild heteroscedasticity. The Q–Q plot shows noticeable curvature in the upper tail, meaning the residuals deviate from a normal distribution, probably due to a few large positive outliers.the multicollinearity check shows GVIF values about 1.0 for all predictors, indicating no meaningful correlation among the independent variables.overally,Overall, the assumptions are mostly met, with some mild non-normality and slight heteroscedasticity, but these issues are not severe enough to invalidate interpretation.
+*** in Plain language:he model examined whether age, gender, race, ethnicity, and income were related to suicidal-risk scores. Most variables including gender, race, and ethnicity—were not strong predictors, although Hispanic/Latino participants showed a small but non-significant trend toward higher scores. Income was the only meaningful predictor: individuals in the $51k–$75k and $76k–$100k ranges had significantly lower suicidal-risk scores than those earning under $30k.  Overally, the model provides a reasonable description of the data and suggests that financial strain may be more strongly related to suicidal risk compare  demographic varriables.
+------------------------------------------------------------------------------------------
+B.Generate a model regressing SABCS_TOTAL_SUM on depression [CESDR_TOTAL_SUM] as measured by the Center for Epidemiologic Studies Depression Scale-Revised (CESD-R). Examine and report model diagnostics. Explain your findings in 2-3 sentences using plain language.
+```{r}
+# Fit simple linear regression model: suicidal risk ~ depression
+mod.2 <- lm(SABCS_TOTAL_SUM ~ CESDR_TOTAL_SUM, data = Dataset4)
+
+summary(mod.2)
+
+#assumption plot 
+par(mfrow = c(1, 2))
+plot(mod.2, which = 1:2)
+```
+
+**Check assumption: the Residuals vs Fitted plotintroduce mild heteroscedasticity but suggests almost linear trend, though there is several high outliers .  The Q–Q plot also shows  deviation from the straight line at the upper tail, indicating that a few individuals with very high depression and suicidal-risk scores create non-normal residuals. Overall, despite these outliers, the strong and statistically significant relationship indicates that higher depression scores are consistently associated with higher suicidal-risk scores in this sample.
+***Plain language:The regression shows a  positive relationship between depression symptoms and suicidal-risk scores: for every 1-point increase in CESD-R depression score, SABCS suicidal-risk increased by about 0.21 points (β = 0.209, p < 2e-16). The model explained about 35% of the variance in suicidal risk (R² = 0.347), Athough diagnostic plots indicated mild heteroscedasticity and a deviations from normality. Overally, despite these the linear trend shows people with higher depression scores tend to have higher
+suicidal-risk scores.
+------------------------------------------------------------------------------------------
+c.Generate a multivariable model regressing SABCS_TOTAL_SUM on Adverse Childhood Experiences (ACEs) items numbered 1 through 10 (ACES_1-ACES_10). Examine and report model diagnostics. Explain your findings in 5 sentences or less using plain language.
+```{r}
+#  multivariable linear regression using ACEs 1–10
+mod.3 <- lm(
+  SABCS_TOTAL_SUM ~ ACES___1 + ACES___2 + ACES___3 + ACES___4 +
+                    ACES___5 + ACES___6 + ACES___7 + ACES___8 +
+                    ACES___9 + ACES___10,
+  data = Dataset4
+)
+summary(mod.3)
+# Diagnostic plots
+par(mfrow = c(1,2))
+plot(mod.3, which = 1:2)
+tbl1 <- tbl_regression(mod.3)
+tbl1
+# VIF table
+tbl_regression(mod.3) %>%
+  add_vif()
+
+```
+***The model examined whether each of the ten ACEs (Adverse Childhood Experience items) was associated with suicidal risk (SABCS score). Three ACE items—ACES_2, ACES_3, and ACES_8—showed clear positive associations with suicidal risk,for each unit increase in ACE_2 and ACE-3suicide risk increase almost 2 times(p<o.oo1) and for each unit increase in ACE_8 ,suicide risk increase 1.6 times(p=0.003)which statistically is significant.(holding other varriable constant) meaning that individuals reporting these experiences tended to have higher SABCS scores on average, while ACES_9 showed a negative association.(coef:_1.6 and P=0.009) Most other ACE items were not statistically significant. Model diagnostics showed non-constant variance and non-normal residuals, indicated by the curve in the residuals-vs-fitted plot and a deviation from the line in the Q-Q plot, suggesting that the linear model assumptions were violated. VIF values were low (all ≈1–1.7), meaning multicollinearity is not a problem. Overally, while some ACE items appear meaningfully related to suicidal risk, the model fit is limited due to assumption violations, so results should be interpreted with caution.
+-------------------------------------------------------------------------------------------
+D.Generate a multivariable model for suicidal risk that combines all significant variables at the alpha = 0.20 level (a liberal threshold often used during variable selection) from parts a through c. Examine and report model diagnostics for this combined model. Explain your findings in 3-4 sentences using plain language.
+```{r}
+# Reset reference categories
+Dataset4$ETHNICITY <- relevel(factor(Dataset4$ETHNICITY),
+                              ref = "Not Hispanic/Latino")
+
+Dataset4$INCOME <- relevel(factor(Dataset4$INCOME),
+                           ref = "< $30,000")
+mod.4 <- lm(
+  SABCS_TOTAL_SUM ~ AGE + ETHNICITY + INCOME + CESDR_TOTAL_SUM +
+    ACES___2 + ACES___3 + ACES___8 + ACES___9 + ACES___10,
+  data = Dataset4
+)
+
+summary(mod.4)
+anova(mod.4)
+# Diagnostic plots
+par(mfrow = c(1,2))
+plot(mod.4, which = 1:2)
+tbl1 <- tbl_regression(mod.4)
+tbl1
+# VIF table
+tbl_regression(mod.4) %>%
+  add_vif()
+
+```
+**checking assumption:The residual plots indicate heteroscedasticity (unequal spread of residuals) and non-normal residuals(deviation in upper and lower quantiles), meaning that some model assumptions are not well met. However, multicollinearity does not appear to be a problem because all GVIF values are close to 1.overrally the violations of assumptions suggest that results should be interpreted cautiously.
+**Plain Language:the model explains about 41% of the variance in suicidal risk(Rsquare=0.41)The combined model indicates that age, Hispanic ethnicity, depression severity, and ACEs 2, 3, 8, and 9 statistically  predict suicidal risk seperately(when holding other varriable constant). for each unit increasing age 0.05 time suicid risk decrease(adjusting other variable)(beta=-0.05,p=0.045)Hispanic compare to nonhispanic/latino for each unit,increase suiside risk 0.99 more(beta=0.99,p=0.047)(holding other variable constant).
+-----------------------------------------------------------------------------------------E.Create a E.new, transformed variable that is the square root of SABCS_TOTAL_SUM. Generate a multivariable model regressing the newly transformed variable on the same set of independent variables used in part d. Examine and report model diagnostics for this model. Explain your findings in 3-4 sentences using plain language.
+```{r}
+
+## 1. Create the transformed outcome
+Dataset4$SABCS_sqrt <- sqrt(Dataset4$SABCS_TOTAL_SUM)
+
+## 2. Make sure reference categories match part d
+Dataset4$ETHNICITY <- relevel(factor(Dataset4$ETHNICITY),
+                              ref = "Not Hispanic/Latino")
+Dataset4$INCOME <- relevel(factor(Dataset4$INCOME),
+                           ref = "< $30,000")
+
+## 3. Fit the multivariable model with the SAME predictors as part d
+mod.5 <- lm(
+  SABCS_sqrt ~ AGE + ETHNICITY + INCOME + CESDR_TOTAL_SUM +
+    ACES___2 + ACES___3 + ACES___8 + ACES___9 + ACES___10,
+  data = Dataset4
+)
+
+## 4. Model results
+summary(mod.5)
+anova(mod.5)
+
+## 5. formatted table with VIFs
+tbl_regression(mod.5) |>
+  add_vif()
+
+## 6. Diagnostic plots
+par(mfrow = c(1, 2))
+plot(mod.5, which = 1:2)
+
+
+```
+****The square-root transformation of SABCS_TOTAL_SUM improved linearity (in Q-Q plot)and reduced the influence of extreme high values, but the diagnostic residuals vs fitted plots still show non-constant variance and departures from normality, meaning model assumptions remain unsatisfied.. Several predictors—including 51000-100000 income, depression score (CESDR_TOTAL_SUM) and ACE items 2, 3, 8, and 9—are statistically associated with squere root of  suicidal-risk scores,(P<0.05) while AGE and ACE 10 and ethnicity are not.looking at coefficient of these varriable showes that beta is smaller than 1 and the slop is shallow. . Overally, the transformed model performs slightly better than the untransformed version, but the residual patterns suggest that suicidal-risk data remain difficult to fully capture with a linear model, even after transformation.
+----------------------------------------------------------------------------------------
+F.Compare and contrast the models from parts d and e. Which model better adheres to the underlying model assumptions? Which model is more interpretable? Given the tradeoffs, which model do you find more defensible, and why? Explain your reasoning in 5 sentences or less using plain language.
+***The square-root transformed model (part E) improved the normality and equal-variance assumptions compared to the  model in part d, as shown by the more even spread of residuals and a linear Q–Q plotb ut the transformed model is harder to interpret because its coefficients describe changes in the square root of suicidal risk—not the original SABCS score—making the effect sizes less clear for real-world use.
+The untransformed model (part d) is easier to interpret because its coefficients directly relate to meaningful point changes in suicidal risk, but it violates key regression assumptions, especially heteroscedasticity.
+Given this tradeoff, the transformed model adheres more closely to statistical assumptions and therefore provides more reliable estimates, even though the interpretation is less straightforward.Overally, the transformed model is more defensible because it produces results that better meet the requirements for linear regression and reduces heteroscedasticity and unequal variance.
+---------------------------------------------------------------------------------------
+2_This problem focuses on generating models with history of suicide [HX_SUICIDE] as the dependent variable. [28 points]
+Generate a multivariable model regressing HX_SUICIDE on demographic variables representing age, gender, race, ethnicity, and annual household income. Examine and report model diagnostics. Explain your findings in 2-3 sentences using plain language.
+```{r}
+
+# Set reference levels
+Dataset4$GENDER    <- relevel(factor(Dataset4$GENDER), ref = "Female")
+Dataset4$RACE      <- relevel(factor(Dataset4$RACE), ref = "White/Caucasian")
+Dataset4$ETHNICITY <- relevel(factor(Dataset4$ETHNICITY), ref = "Not Hispanic/Latino")
+Dataset4$INCOME    <- relevel(factor(Dataset4$INCOME), ref = "< $30,000")
+
+# Fit logistic regression model
+mod.6 <- glm(HX_SUICIDE ~ AGE + GENDER + RACE + ETHNICITY + INCOME,
+                   data = Dataset4, family = binomial)
+
+# Model summary
+summary(mod.6)
+
+# Odds ratios with 95% CI
+
+OR_CI <- exp(confint(mod.6))
+OR_vals <- exp(coef(mod.6))
+
+OR_results <- cbind(OR_vals, OR_CI)
+OR_results
+
+# Model diagnostics
+plot(x = 1:nobs(mod.6),
+     y = resid(mod.6, type = "response"),
+     type = "l",
+     main = "Response Residuals vs Observation Order")
+car::vif(mod.6)
+
+library(visreg)
+
+visreg(mod.6, "AGE", scale = "response",
+       main = "Linearity Check: AGE")
+plot(mod.6, which = 4,
+     main = "Cook's Distance for Influential Observations")
+abline(h = 4/nobs(mod.6), col = "red", lty = 2)
+
+```
+***The residual-versus-observation-order plot shows random scatter with no visible trend or pattern.the GVIF table shows all adjusted GVIF values are close to 1 (range: 1.01–1.07), which is acceptable.The visreg plot for AGE shows a nearly straight, gently upward-sloping line.The Cook’s distance plot shows a small number of observations (e.g., #171, #369, #448) slightly above the suggested cutoff line (4/n).overallyThe diagnostic results indicate that the logistic regression model meets the key assumptions. Predictors do not show multicollinearity, AGE appears to have a roughly linear association with the log-odds of reporting suicide history, and only a few mildly influential observations were detected. Overall, the model is appropriate and the assumptions are reasonably satisfied.
+***most demographic variables were not meaningfully related to having a history of suicide—age, gender, race groups, and all income categories showed no statistically significant effects. The only significant predictor was ethnicity: individuals identifying as Hispanic/Latino had higher log-odds (estimate = 0.90) of reporting a suicide history compared to non-Hispanic participants,and corresponds to being about 2.47 times more likely to have a suicide history  compare to non-Hispanic (OR ≈ 2.47). Overall, demographic variables explained relatively little variation in suicide history, and only ethnicity emerged as a reliable factor.
+-------------------------------------------------------------------------------------------------------
+B.Generate a model regressing HX_SUICIDE on depression [CESDR_TOTAL_SUM] as measured by CESD-R. Examine and report model diagnostics. Explain your findings in 2-3 sentences using plain language.
+```{r}
+
+# 1. Fit logistic regression: HX_SUICIDE ~ CESDR_TOTAL_SUM
+mod.7 <- glm(HX_SUICIDE ~ CESDR_TOTAL_SUM,
+               family = binomial,
+               data   = Dataset4)
+
+# 2. Model summary
+summary(mod.7)
+
+# 3. Odds ratio and 95% CI
+OR_vals <- exp(coef(mod.7))
+OR_CI   <- exp(confint(mod.7))
+OR_results_dep <- cbind(OR_vals, OR_CI)
+OR_results_dep
+
+## Independence
+plot(x = 1:nobs(mod.7),
+     y = resid(mod.7, type = "response"),
+     type = "l",
+     main = "Response Residuals vs Observation Order",
+     xlab = "Observation",
+     ylab = "Response residuals")
+
+
+## Linearity of the logit for CESDR_TOTAL_SUM
+visreg(mod.7, "CESDR_TOTAL_SUM", scale = "response",
+       main = "Linearity Check: CESDR_TOTAL_SUM")
+
+## Influential observations (Cook's distance)
+plot(mod.7, which = 4,
+     main = "Cook's Distance for HX_SUICIDE ~ CESDR_TOTAL_SUM")
+abline(h = 4/nobs(mod.7), col = "red", lty = 2)
+
+
+```
+***test assumption:in Cook’s Distance plot a few observations (notably 146, 360, and 447) exceed the reference line, meaning they have higher-than-expected influence on the model.in Linearity Check PlotThe curve increases more steeply at higher depression scores showing a non-linear pattern. This suggests that the effect of depression on suicide history grows stronger at high levels of depression rather than increasing at a constant rate and the relationship is not perfectly linear.in Residuals vs. Observation Order Plot the residuals appear randomly scattered without clear trends and The observations appear independent, so this assumption is satisfied. beacause we have one independent varriable multicollinarity was not tested.
+***Plain-Language:the model shows that higher depression scores (CESDR_TOTAL_SUM) are strongly associated with having a history of suicide, with each 1-point increase in depression raising the odds by about 6% (OR ≈ 1.06.p<0.05)
+-------------------------------------------------------------------------------------------------------
+c-Generate a multivariable model regressing HX_SUICIDE on ACES_1 through ACES_10. Examine and report model diagnostics. Explain your findings in 2-3 sentences using plain language.
+```{r}
+
+# 1. Fit logistic regression
+mod.8 <- glm(
+  HX_SUICIDE ~ ACES___1 + ACES___2 + ACES___3 + ACES___4 + ACES___5 +
+               ACES___6 + ACES___7 + ACES___8 + ACES___9 + ACES___10,
+  data   = Dataset4,
+  family = binomial
+)
+
+# 2. Model summary
+summary(mod.8)
+
+# 3. Odds ratios with 95% CI
+OR_vals_aces <- exp(coef(mod.8))
+OR_CI_aces   <- exp(confint(mod.8))
+OR_results_aces <- cbind(OR_vals_aces, OR_CI_aces)
+OR_results_aces
+
+
+## Independence of observations
+plot(
+  x = 1:nobs(mod.8),
+  y = resid(mod.8, type = "response"),
+  type = "l",
+  main = "Response Residuals vs Observation Order",
+  xlab = "Observation",
+  ylab = "Response residuals"
+)
+
+## Multicollinearity among ACE items
+car::vif(mod.8)
+
+
+## Influential observations (Cook's distance)
+plot(mod.8, which = 4,
+     main = "Cook's Distance for HX_SUICIDE ~ ACES 1–10")
+abline(h = 4/nobs(mod.8), col = "red", lty = 2)
+
+
+```
+***checking assumption: in Response Residuals vs Observation plot the residuals scattered across participants  with no clear pattern or trend that shows observations are independent.in Cook’s Distance,the observations  76, 358, 369 exceed the dashed cutoff line,meaning they may disproportionately influence the model.in Multicollinearity all VIF values are well below the usual threshold (5)so the ACES items do not strongly correlate with each other.Since ACES are categorical, linearity is automatically satisfied.
+Plain language:Several ACES items were strongly associated with having a history of suicide. Participants reporting ACES such as emotional abuse (ACES_2), physical abuse (ACES_3), and sexual abuse (ACES_8) had 2–5 times higher odds of reporting a suicide history compared to those without these experiences.
+_______________________________________________________________________________________________________D-Generate a final multivariable model for history of suicide that combines all significant variables at the alpha = 0.20 level from parts a through c. Summarize your findings in a table.
+```{r}
+# Final multivariable logistic regression model
+mod.9 <- glm(
+  HX_SUICIDE ~ ETHNICITY + CESDR_TOTAL_SUM +
+    ACES___1 + ACES___2 + ACES___3 +
+    ACES___8 + ACES___9 + ACES___10,
+  family = binomial,
+  data = Dataset4
+)
+summary(mod.9)
+
+# Extract Odds Ratios and 95% CIs
+OR_vals <- exp(coef(mod.9))
+CI_vals <- exp(confint(mod.9))
+
+final_table <- data.frame(
+  Variable = names(OR_vals),
+  OR = round(OR_vals, 3),
+  CI_low = round(CI_vals[,1], 3),
+  CI_high = round(CI_vals[,2], 3)
+)
+
+final_table
+
+
+```
+E-Examine and report model diagnostics of your final multivariable model for history of suicide. Explain your findings in 3-4 sentences using plain language.
+```{r}
+# Residuals vs observation order
+plot(
+  x = 1:nobs(mod.9),
+  y = resid(mod.9, type = "response"),
+  type = "l",
+  xlab = "Observation number",
+  ylab = "Response residuals",
+  main = "Response Residuals vs Observation Order (Final Model)"
+)
+car::vif(mod.9)
+# Cook's distance plot
+plot(
+  mod.9,
+  which = 4,
+  main = "Cook's Distance for Final HX_SUICIDE Model"
+)
+abline(h = 4 / nobs(mod.9), col = "red", lty = 2)
+
+
+```
+***checking assumption:The Cook’s plot a few observations (e.g., 171, 216, and 358) exceed the suggested cutoff line, meaning these participants have a relatively larger influence on the model estimates. However these values are  not extremely high, so it seems the model is not being severely distorted.The VIF values for all predictors in the final model are close to 1–1.5, which is well below the common cutoff of 5. This means the predictors are not strongly correlated with one another.the residuals plot shows the prediction errors scattered randomly across cases, without any pattern or trend so suggests that the independence assumption is metand observations do not depend on each other. 
+***plain language:Our model diagnostics showed no major problems. The VIF values were all low, meaning none of the predictors were strongly correlated. The influence plot showed a few observations with slightly higher impact, but none were extreme enough to threaten the accuracy of the results.
+------------------------------------------------------------------------------------------------------
+3-Using the final models generated in parts 1d and 2d from this assignment: [12 points]
+A-Choose one independent variable from each model that showed a statistically significant association (alpha = 0.05) with the dependent variable. For each independent variable, report the corresponding measure of effect (e.g., beta coefficient, relative risk, or odds ratio) and interpret it in plain language in 1-2 sentences.
+B_Choose one independent variable from each model that did not show a statistically significant association (alpha = 0.05) with the dependent variable. For each independent variable, report the corresponding measure of effect (e.g., beta coefficient, relative risk, or odds ratio) and interpret it in plain language in 1-2 sentences.
+```{r}
+mod.10 <- glm(
+  HX_SUICIDE ~ ETHNICITY + CESDR_TOTAL_SUM +ACES___1+ACES___2 + ACES___3 + ACES___8 + ACES___9 + ACES___10,
+  family = binomial,
+  data = Dataset4
+)
+summary(mod.10)
+
+# Extract Odds Ratios and 95% CIs
+OR_vals <- exp(coef(mod.10))
+CI_vals <- exp(confint(mod.10))
+
+mod.11 <- lm(
+  SABCS_TOTAL_SUM ~ AGE + ETHNICITY + INCOME + CESDR_TOTAL_SUM +
+    ACES___2 + ACES___3 + ACES___8 + ACES___9 + ACES___10,
+  data = Dataset4
+)
+
+summary(mod.11)
+anova(mod.11)
+                           
+```
+A_plain language:1_ based in this data we can conclude that People with higher  ACES_2 category  associated with higher odds of history of suicide compared to those not in that category (p < 0.003,CI:2.101-8.727,OR=4.274). The odds ratio of 4.2 means they were about 4 times more likely to report a history of suicide. Additionally, each one-unit increase in ACES_2 was associated with a 1.37 increase in the log-odds of reporting a suicide history.( with holding other varriable constant)
+2-based on this data we can conclude that Depression severity statistically is associated with higher SABCS scores.  Each 1-point increase in depression score is associated with a 0.21-point increase in SABCS score.(β = 0.18, p< .001,CI;0.16-0.21)and we have 41% of total variance.(With holding other varriable constant)
+B_1-based in this data we can conclude that individual with a household income of $30,000–$50,000 did not show a statistically significant difference in their SABCS_TOTAL_SUM compared to those earning under $30,000 when adjusting with other varriable.The beta value (–0.58) suggests a small decrease, but because the confidence interval crosses zero, this difference is likely due to chance.(Beta = –0.58, 95% CI: –1.6 to 0.46, p = 0.30)
+2-based in this data we can conclude that individualwhich exposed to ACES items 1 had about 29% lower odds of reporting a suicide history compared to those without this ACE, but the result is not statistically significant, and the wide confidence interval suggests uncertainty as well(OR = 0.71 .95% CI: 0.28–1.74.p=0.45). Therefore, ACES_1 does not appear to be a reliable predictor of suicide history in this model.
+------------------------------------------------------------------------------------------------------
+4-Based on the variables and structure of this dataset: [16 points]
+Which observational study design does this analysis most closely resemble (cross-sectional, case-control, or cohort)? Explain your reasoning in 2-3 sentences.
+Discuss one limitation of this study design when trying to interpret relationships between variables in 1-2 sentences.
+Explain how you might redesign this study to minimize that limitation in 3-4 sentences.
+
+***This analysis is  most likely to be a cross-sectional study because all variables—including suicidal history, depression scores, ACEs, and demographics—were collected at a same point in time. There is no data that  indicate that participants were selected based on outcome  (case-control) or followed over time (cohort). It seems the data collected exposure and outcome informations in the same time.
+
+
+-A major limitation of cross-sectional studies is that they  cannot determine whether an exposure (e.g., ACEs, depression, income) occurred before the outcome (e.g.suicide history)and  it is difficult to infer causal relationships and only associations can be identified.
+
+
+-To minimize  the limitation, the study could be redesigned as a longitudinal cohort study. Participants with depression can  be enrolled before developing the outcome  and followed over time while  asking about ACEs-related events, depression symptoms, and other risk factors.it can show  changing  in exposures predict later suicide events.
+
